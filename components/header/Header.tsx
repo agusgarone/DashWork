@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Settings } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { IconButton } from "@/components/ui/IconButton";
 import { useEscapeKey } from "@/hooks/useEscapeKey";
 import { useTheme } from "@/hooks/useTheme";
@@ -15,7 +17,13 @@ const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
   { value: "dark", label: "Dark" },
 ];
 
+const NAV_ITEMS = [
+  { href: "/", label: "Workspace" },
+  { href: "/analyses", label: "Análisis" },
+] as const;
+
 export function Header() {
+  const pathname = usePathname();
   const { preference, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -42,6 +50,29 @@ export function Header() {
           DashWork
         </h1>
         <p className="mt-0.5 text-sm text-muted">Personal workspace</p>
+        <nav className="mt-3 flex items-center gap-4 text-sm">
+          {NAV_ITEMS.map((item) => {
+            const active =
+              item.href === "/"
+                ? pathname === "/"
+                : pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "rounded-md outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-foreground/20",
+                  active
+                    ? "text-foreground"
+                    : "text-muted hover:text-foreground",
+                )}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
       </div>
       <div className="flex items-center gap-2 text-sm text-muted">
         <time suppressHydrationWarning>{formatHeaderDate()}</time>

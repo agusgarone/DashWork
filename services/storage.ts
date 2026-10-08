@@ -1,5 +1,11 @@
-import type { BacklogItem, QuickLink, ThemePreference } from "@/types";
+import type {
+  BacklogItem,
+  IssueAnalysis,
+  QuickLink,
+  ThemePreference,
+} from "@/types";
 import { defaultBacklog, defaultLinks } from "@/services/seed";
+import { parseAnalyses } from "@/utils/analysis";
 
 /**
  * Local persistence layer.
@@ -15,6 +21,7 @@ export const STORAGE_KEYS = {
   links: `${PREFIX}links`,
   backlog: `${PREFIX}backlog`,
   recentBranches: `${PREFIX}recent-branches`,
+  analyses: `${PREFIX}analyses`,
   theme: `${PREFIX}theme`,
 } as const;
 
@@ -123,4 +130,48 @@ export const themeStore = createStore(
   getThemePreference,
   saveThemePreference,
   "system" as ThemePreference,
+);
+
+export type AnalysesState = {
+  items: IssueAnalysis[];
+  corrupted: boolean;
+};
+
+const emptyAnalyses: AnalysesState = { items: [], corrupted: false };
+
+let analysesPersistFailed = false;
+
+function readAnalysesState(): AnalysesState {
+  if (!isBrowser()) return emptyAnalyses;
+
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEYS.analyses);
+    if (raw === null) return emptyAnalyses;
+    const parsed = parseAnalyses(JSON.parse(raw));
+    if (!parsed) return { items: [], corrupted: true };
+    return { items: parsed, corrupted: false };
+  } catch {
+    return { items: [], corrupted: true };
+  }
+}
+
+function writeAnalysesState(state: AnalysesState): void {
+  if (!isBrowser() || state.corrupted) return;
+
+  try {
+    writeJson(STORAGE_KEYS.analyses, state.items);
+    analysesPersistFailed = false;
+  } catch {
+    analysesPersistFailed = true;
+  }
+}
+
+export function didAnalysesPersistFail(): boolean {
+  return analysesPersistFailed;
+}
+
+export const analysesStore = createStore(
+  readAnalysesState,
+  writeAnalysesState,
+  emptyAnalyses,
 );

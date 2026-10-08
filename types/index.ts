@@ -69,3 +69,23 @@ export type BacklogItem = {
 };
 
 export type ThemePreference = "light" | "dark" | "system";
+
+export const ANALYSIS_STATUSES = [
+  "Borrador",
+  "En análisis",
+  "Listo para implementar",
+  "Finalizado",
+] as const;
+
+export type AnalysisStatus = (typeof ANALYSIS_STATUSES)[number];
+
+export type IssueAnalysis = {
+  id: string;
+  issueNumber: string;
+  title: string;
+  jiraUrl?: string;
+  status: AnalysisStatus;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+};
